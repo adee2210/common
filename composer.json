@@ -10,7 +10,7 @@
         }
     ],
     "autoload": {
-        "psr-4": { "Adee2210\\Common\\" : "src/" }
+        "psr-0": { "Adee2210\\Common\\" : "src/" }
     },
     "minimum-stability": "dev",
     "require": {}
