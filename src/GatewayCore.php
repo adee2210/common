@@ -99,7 +99,8 @@ class GatewayCore
 			else
 				$xml->addChild($arrkey, $_arrvar);
 		}
-        return explode("\n",$xml->asXML())[1];
+		$xmlobj = explode("\n",$xml->asXML());
+        return $xmlobj[1];
 	}
 
 	private function wsexec($str,$op){
