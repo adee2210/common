@@ -5,13 +5,13 @@ class GatewayCore
 {
     static $configs = array();
     static $vars = array();
-	static $name = '';
-	static $url = '';
-	public $send = '';
+    static $name = '';
+    static $url = '';
+    public $send = '';
 
-	public function getConfig($args = array())
-	{
-		$vars = $this->configs;
+    public function getConfig($args = array())
+    {
+        $vars = $this->configs;
         if(!empty($args['run'])){
             $run = explode('.',$args['run']);
             foreach($run as $field){
@@ -21,107 +21,107 @@ class GatewayCore
             }
         }
         return $vars;
-	}
+    }
 
-	public function getVars($args = array())
-	{
-		$vars = $this->vars;
-		if(!empty($args['run'])){
-			$run = array('form',substr($args['run'],5));
-			foreach($run as $field)
-				if(!empty($vars[$field]))
-					$vars = $vars[$field];
-		}
-		return $vars;
-	}
+    public function getVars($args = array())
+    {
+        $vars = $this->vars;
+        if(!empty($args['run'])){
+            $run = array('form',substr($args['run'],5));
+            foreach($run as $field)
+                if(!empty($vars[$field]))
+                    $vars = $vars[$field];
+        }
+        return $vars;
+    }
 
     public function getName()
     {
-		return $this->name;
+        return $this->name;
     }
 
     public function postForm($process,$args = array())
     {
-			$formvar = $this->getConfig(array('run'=>$process));
-			$this->url = $formvar['url'];
-			$arrvars = array();
-			foreach($formvar['args'] as $key => $frmvar)
-				if(!is_array($frmvar)){
-					if(substr_count($frmvar,'.')>0){
-						if(!empty($args[str_replace(".","_",$frmvar)]))
-							@eval('$arrvars['.str_replace('.','][',$frmvar).']=@$args[str_replace(".","_",$frmvar)];');
-					}
-					else
-						if(!empty($args[str_replace(".","_",$frmvar)]))
-							$arrvars[$frmvar] = @$args[str_replace(".","_",$frmvar)];
-				}
-				else
-					$arrvars[$key] = $args[$key];
-			if(isset($formvar['format'])&&isset($formvar['format']['send'])&&$formvar['format']['send']=='json'){
-				$this->send = json_encode($arrvars);
-				$response = $this->wsexec(urlencode(json_encode($arrvars)),$process);
-			}
-			else{
-					$xml = $this->getXML(array('process'=>$process,'xmlns'=>$formvar['xmlns'],'vars'=>$arrvars));
-					$response = $this->wsexec("txnMode=".$formvar['txnMode']."&txnRequest=".urlencode($xml),$process);
+            $formvar = $this->getConfig(array('run'=>$process));
+            $this->url = $formvar['url'];
+            $arrvars = array();
+            foreach($formvar['args'] as $key => $frmvar)
+                if(!is_array($frmvar)){
+                    if(substr_count($frmvar,'.')>0){
+                        if(!empty($args[str_replace(".","_",$frmvar)]))
+                            @eval('$arrvars['.str_replace('.','][',$frmvar).']=@$args[str_replace(".","_",$frmvar)];');
+                    }
+                    else
+                        if(!empty($args[str_replace(".","_",$frmvar)]))
+                            $arrvars[$frmvar] = @$args[str_replace(".","_",$frmvar)];
+                }
+                else
+                    $arrvars[$key] = $args[$key];
+            if(isset($formvar['format'])&&isset($formvar['format']['send'])&&$formvar['format']['send']=='json'){
+                $this->send = json_encode($arrvars);
+                $response = $this->wsexec(urlencode(json_encode($arrvars)),$process);
+            }
+            else{
+                    $xml = $this->getXML(array('process'=>$process,'xmlns'=>$formvar['xmlns'],'vars'=>$arrvars));
+                    $response = $this->wsexec("txnMode=".$formvar['txnMode']."&txnRequest=".urlencode($xml),$process);
 
-					// Reformat XML
-					/*$doc = new DomDocument('1.0');
-					$doc->preserveWhiteSpace = false;
-					$doc->formatOutput = true;
-					$doc->loadXML($xml);*/
-					$this->send = $xml;//$doc->saveXML($xml);
-			}
-			if(isset($formvar['format'])&&isset($formvar['format']['receive'])&&$formvar['format']['receive']=='json')
-				return $response['exec'];
-			elseif($arr = $this->xml2array($response['exec']))
-				return $arr[$formvar['response']];
-			else
-				return false;
+                    // Reformat XML
+                    /*$doc = new DomDocument('1.0');
+                    $doc->preserveWhiteSpace = false;
+                    $doc->formatOutput = true;
+                    $doc->loadXML($xml);*/
+                    $this->send = $xml;//$doc->saveXML($xml);
+            }
+            if(isset($formvar['format'])&&isset($formvar['format']['receive'])&&$formvar['format']['receive']=='json')
+                return $response['exec'];
+            elseif($arr = $this->xml2array($response['exec']))
+                return $arr[$formvar['response']];
+            else
+                return false;
     }
 
-	public function getXML($args = array()){		
-		$xmlstr = "<{$args['process']} xmlns=\"{$args['xmlns']}\" />";
+    public function getXML($args = array()){        
+        $xmlstr = "<{$args['process']} xmlns=\"{$args['xmlns']}\" />";
         $xml = new \SimpleXMLElement($xmlstr);
-		foreach($args['vars'] as $arrkey=>$_arrvar){
-			if(is_array($_arrvar)){
-				$$arrkey = $xml->addChild($arrkey);
-				foreach($_arrvar as $_arrkey=>$__arrvar){
-					if(is_array($__arrvar)){
-						$$_arrkey = $$arrkey->addChild(rtrim($arrkey,'s'));
-						foreach($__arrvar as $__arrkey=>$___arrvar)
-							$$_arrkey->addChild($__arrkey,$___arrvar);
-					}
-					else
-						$$arrkey->addChild($_arrkey, $__arrvar);
-				}
-			}
-			else
-				$xml->addChild($arrkey, $_arrvar);
-		}
-		$xmlobj = explode("\n",$xml->asXML());
+        foreach($args['vars'] as $arrkey=>$_arrvar){
+            if(is_array($_arrvar)){
+                $$arrkey = $xml->addChild($arrkey);
+                foreach($_arrvar as $_arrkey=>$__arrvar){
+                    if(is_array($__arrvar)){
+                        $$_arrkey = $$arrkey->addChild(rtrim($arrkey,'s'));
+                        foreach($__arrvar as $__arrkey=>$___arrvar)
+                            $$_arrkey->addChild($__arrkey,$___arrvar);
+                    }
+                    else
+                        $$arrkey->addChild($_arrkey, $__arrvar);
+                }
+            }
+            else
+                $xml->addChild($arrkey, $_arrvar);
+        }
+        $xmlobj = explode("\n",$xml->asXML());
         return $xmlobj[1];
-	}
+    }
 
-	private function wsexec($str,$op){
-		$url = $this->url;
-		$soap_do = curl_init(); 
+    private function wsexec($str,$op){
+        $url = $this->url;
+        $soap_do = curl_init(); 
 
-		curl_setopt($soap_do, CURLOPT_URL, $url);   
-		curl_setopt($soap_do, CURLOPT_CONNECTTIMEOUT, 600); 
-		curl_setopt($soap_do, CURLOPT_TIMEOUT, 600); 
-		curl_setopt($soap_do, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($soap_do, CURLOPT_SSL_VERIFYPEER, false);  
-		curl_setopt($soap_do, CURLOPT_SSL_VERIFYHOST, false); 
-		curl_setopt($soap_do, CURLOPT_POST, true); 
-		curl_setopt($soap_do, CURLOPT_POSTFIELDS, $str); 
-		curl_setopt($soap_do, CURLOPT_USERAGENT, 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)');
+        curl_setopt($soap_do, CURLOPT_URL, $url);   
+        curl_setopt($soap_do, CURLOPT_CONNECTTIMEOUT, 600); 
+        curl_setopt($soap_do, CURLOPT_TIMEOUT, 600); 
+        curl_setopt($soap_do, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($soap_do, CURLOPT_SSL_VERIFYPEER, false);  
+        curl_setopt($soap_do, CURLOPT_SSL_VERIFYHOST, false); 
+        curl_setopt($soap_do, CURLOPT_POST, true); 
+        curl_setopt($soap_do, CURLOPT_POSTFIELDS, $str); 
+        curl_setopt($soap_do, CURLOPT_USERAGENT, 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)');
 
-		$result['exec'] = curl_exec($soap_do);
-		$result['error'] = curl_error($soap_do);
+        $result['exec'] = curl_exec($soap_do);
+        $result['error'] = curl_error($soap_do);
 
-		return $result;
-	}
+        return $result;
+    }
 
     protected function xml2array($contents, $get_attributes=1, $priority = 'tag') {
         if(!$contents) return array();
